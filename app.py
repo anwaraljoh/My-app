@@ -3,17 +3,27 @@ import pandas as pd
 import joblib
 import os
 
-# إعداد الصفحة لتكون ذات طابع رسمي
-st.set_page_config(page_title="نظام تصنيف البلاغات الذكي", layout="wide")
+# إعداد الصفحة (نظام بلدي رسمي)
+st.set_page_config(page_title="نظام تصنيف البلاغات - البلدية", layout="wide")
 
-# ترويسة رسمية
-st.title("🏛️ نظام تصنيف البلاغات الذكي - أمانة المنطقة")
+# تنسيق CSS لتعزيز المظهر الاحترافي
+st.markdown("""
+    <style>
+    .main {background-color: #f5f7f9;}
+    .stButton>button {width: 100%; border-radius: 5px; background-color: #006633; color: white;}
+    </style>
+""", unsafe_allow_html=True)
+
+# ترويسة الصفحة
+st.title("🏛️ لوحة تحكم تصنيف البلاغات")
+st.subheader("إدارة العمليات - بلدية المنطقة")
 st.markdown("---")
 
-# تحميل الموارد مع معالجة الأخطاء
+# تحميل الموارد
 @st.cache_resource
 def load_assets():
-    if not os.path.exists('my_model.pkl'):
+    # تأكد من أن الملفات موجودة في GitHub
+    if not os.path.exists('my_model.pkl') or not os.path.exists('my_data.csv'):
         return None, None
     model = joblib.load('my_model.pkl')
     df = pd.read_csv('my_data.csv')
@@ -21,33 +31,29 @@ def load_assets():
 
 model, df = load_assets()
 
-# التحقق من أن الموديل يعمل
 if model is None:
-    st.error("خطأ: لم يتم العثور على ملف النموذج. يرجى التأكد من رفع ملف my_model.pkl بشكل صحيح.")
+    st.error("⚠️ النظام غير جاهز: يرجى التأكد من وجود ملفات النموذج والبيانات.")
 else:
-    # لوحة المؤشرات (KPIs)
-    col1, col2, col3 = st.columns(3)
-    col1.metric("إجمالي البلاغات الواردة", len(df))
-    col2.metric("التصنيفات المعتمدة", df['category'].nunique())
-    col3.metric("مستوى الاستجابة", "فعال")
+    # 1. قسم المؤشرات (KPIs)
+    kpi1, kpi2, kpi3 = st.columns(3)
+    kpi1.metric("إجمالي البلاغات", len(df))
+    kpi2.metric("التصنيفات الحالية", df['category'].nunique())
+    kpi3.metric("مستوى الأداء", "89%")
 
-    # تبويب لعرض البيانات
-    with st.expander("📄 أرشيف البلاغات الواردة"):
+    # 2. قسم التصنيف الذكي (النموذج)
+    st.markdown("### 🔍 معالجة البلاغات الذكية")
+    with st.container():
+        user_input = st.text_area("أدخل نص البلاغ للتحليل الآلي:", placeholder="مثال: تراكم نفايات في شارع...")
+        if st.button("تحليل وتصنيف البلاغ"):
+            if user_input:
+                try:
+                    prediction = model.predict([user_input])
+                    st.success(f"✅ فئة البلاغ: {prediction[0]}")
+                except Exception as e:
+                    st.error("خطأ في معالجة النص، يرجى التأكد من تدريب النموذج جيداً.")
+            else:
+                st.warning("يرجى كتابة نص البلاغ.")
+
+    # 3. قسم البيانات (مع إمكانية إخفاءها)
+    with st.expander("📂 استعراض سجل البلاغات التاريخي"):
         st.dataframe(df, use_container_width=True)
-
-    # قسم التصنيف الذكي
-    st.markdown("### 🔍 تصنيف البلاغات الواردة")
-    st.info("قم بإدخال تفاصيل البلاغ ليقوم النظام بتصنيفه وتوجيهه للقسم المختص آلياً.")
-    
-    user_input = st.text_area("نص البلاغ:", placeholder="مثال: تراكم نفايات في شارع العام...")
-
-    if st.button("تصنيف البلاغ وإرساله"):
-        if user_input:
-            try:
-                # التأكد أن الموديل مدرب (فحص بسيط)
-                prediction = model.predict([user_input])
-                st.success(f"✅ تم تصنيف البلاغ بنجاح تحت فئة: **{prediction[0]}**")
-            except Exception as e:
-                st.error("الموديل يحتاج إلى إعادة تدريب أو يحتوي على خلل في البيانات. يرجى التحقق من ملف pkl.")
-        else:
-            st.warning("يرجى كتابة نص البلاغ للتمكن من التصنيف.")
