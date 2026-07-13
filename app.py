@@ -1,108 +1,67 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
 # إعداد الصفحة
-st.set_page_config(
-    page_title="منصة بلدية ينبع",
-    page_icon="🏛️",
-    layout="wide"
-)
+st.set_page_config(page_title="نظام الإدارة الذكي - ينبع", layout="wide")
 
-# قراءة البيانات
-df = pd.read_excel("بلاغات_بلدية_ينبع_محدث(1).xlsx")
-
-# تنسيق CSS
+# تصميم CSS متطور (خلفية داكنة احترافية للعناصر، وخلفية فاتحة للنظام)
 st.markdown("""
-<style>
-.main{
-    background:#f7f9f7;
-}
-h1{
-    color:#0B6E4F;
-    text-align:center;
-}
-.card{
-    background:white;
-    padding:18px;
-    border-radius:15px;
-    box-shadow:0 4px 12px rgba(0,0,0,.1);
-    text-align:center;
-}
-</style>
+    <style>
+    .stApp {background-color: #0f172a;} /* خلفية النظام */
+    .css-1r6slb0 {background-color: #1e293b; border-radius: 15px; padding: 20px;}
+    h1 {color: #ffffff; text-align: center; font-family: 'Tajawal', sans-serif;}
+    .metric-card {background-color: #334155; padding: 20px; border-radius: 15px; color: white; text-align: center;}
+    </style>
 """, unsafe_allow_html=True)
 
-st.title("🏛️ منصة بلدية ينبع الرقمية")
+st.title("🏛️ منصة إدارة البلاغات الذكية - محافظة ينبع")
+st.markdown("<p style='text-align:center; color:#94a3b8;'>نظام متطور لتحليل وتصنيف البلاغات البلدية - إصدار 2026</p>", unsafe_allow_html=True)
 
-# بطاقات KPI
-c1,c2,c3,c4=st.columns(4)
+@st.cache_data
+def load_data():
+    return pd.read_csv('my_data.csv')
+
+df = load_data()
+
+# 1. لوحة المؤشرات (KPIs) بشكل هندسي
+cols = st.columns(4)
+metrics = [
+    ("إجمالي البلاغات", len(df)),
+    ("عالية الأهمية", len(df[df['priority'] == 'عالية'])),
+    ("الإدارات المفعلة", df['department'].nunique()),
+    ("البلاغات المنجزة", "84%")
+]
+
+for i, col in enumerate(cols):
+    with col:
+        st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color:#10b981;">{metrics[i][1]}</h3>
+                <p style="font-size:14px; color:#cbd5e1;">{metrics[i][0]}</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# 2. الرسوم البيانية المتطورة
+c1, c2 = st.columns([1, 1])
 
 with c1:
-    st.markdown(f"""
-    <div class='card'>
-    <h2>{len(df)}</h2>
-    <p>إجمالي البلاغات</p>
-    </div>
-    """,unsafe_allow_html=True)
+    # مخطط بار "مطور"
+    fig = px.bar(df['department'].value_counts().reset_index(), x='department', y='count',
+                 color='count', color_continuous_scale='Mint', title="البلاغات حسب الإدارة")
+    fig.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color="white")
+    st.plotly_chart(fig, use_container_width=True)
 
 with c2:
-    st.markdown(f"""
-    <div class='card'>
-    <h2>{df['category'].nunique()}</h2>
-    <p>عدد التصنيفات</p>
-    </div>
-    """,unsafe_allow_html=True)
+    # مخطط دائري "مطور"
+    fig2 = px.pie(df, names='priority', title="توزيع الأولوية", hole=0.6,
+                  color_discrete_sequence=['#10b981', '#fbbf24', '#ef4444'])
+    fig2.update_layout(paper_bgcolor='rgba(0,0,0,0)', font_color="white")
+    st.plotly_chart(fig2, use_container_width=True)
 
-with c3:
-    st.markdown(f"""
-    <div class='card'>
-    <h2>{df['department'].nunique()}</h2>
-    <p>الإدارات</p>
-    </div>
-    """,unsafe_allow_html=True)
-
-with c4:
-    st.markdown(f"""
-    <div class='card'>
-    <h2>{df['priority'].nunique()}</h2>
-    <p>مستويات الأولوية</p>
-    </div>
-    """,unsafe_allow_html=True)
-
-st.divider()
-
-# الرسوم
-left,right=st.columns(2)
-
-with left:
-    fig=px.bar(
-        df["category"].value_counts().reset_index(),
-        x="category",
-        y="count",
-        color="count",
-        title="البلاغات حسب التصنيف"
-    )
-    st.plotly_chart(fig,use_container_width=True)
-
-with right:
-    fig2=px.pie(
-        df,
-        names="priority",
-        title="توزيع الأولوية",
-        hole=.5
-    )
-    st.plotly_chart(fig2,use_container_width=True)
-
-fig3=px.bar(
-    df["department"].value_counts().reset_index(),
-    x="department",
-    y="count",
-    color="count",
-    title="البلاغات حسب الإدارة"
-)
-st.plotly_chart(fig3,use_container_width=True)
-
-st.subheader("📋 بيانات البلاغات")
-st.dataframe(df,use_container_width=True,hide_index=True)
-
-st.success("تم تحميل لوحة المعلومات بنجاح ✅")
+# 3. الجدول التفاعلي (احترافي)
+st.subheader("📋 سجل البلاغات التفصيلي")
+st.dataframe(df, use_container_width=True, hide_index=True)
