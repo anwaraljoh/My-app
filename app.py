@@ -22,7 +22,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<h1>🏛️ منصة بلدية محافظة ينبع لتصنيف البلاغات وتحليلها</h1>", unsafe_allow_html=True)
+st.markdown("<h1>🏛️ احصائيات بلدية محافظة ينبع لتصنيف البلاغات وتحليلها</h1>", unsafe_allow_html=True)
 
 @st.cache_data
 def load_data():
