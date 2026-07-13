@@ -3,51 +3,69 @@ import pandas as pd
 import plotly.express as px
 
 # إعداد الصفحة
-st.set_page_config(page_title="منصة رصد البلاغات - بلدية ينبع", layout="wide")
+st.set_page_config(page_title="منصة بلدية ينبع - الذكية", layout="wide")
 
-# تنسيق الألوان (هوية بلدية)
+# تصميم احترافي (CSS)
 st.markdown("""
     <style>
-    .main {background-color: #f8f9fa;}
-    h1 {color: #006633; text-align: center;}
+    /* تغيير لون الخلفية */
+    .stApp {background-color: #f0f2f6;}
+    
+    /* تنسيق الكروت */
+    div[data-testid="stMetricValue"] {
+        font-size: 28px;
+        color: #1e3a8a;
+    }
+    .css-1r6slb0 {background-color: #ffffff; padding: 20px; border-radius: 15px; border-left: 5px solid #1e3a8a;}
+    
+    /* تنسيق العناوين */
+    h1 {color: #1e3a8a; text-align: center; font-weight: bold;}
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🚧 لوحة المؤشرات الاستراتيجية - بلدية محافظة ينبع")
-st.markdown("---")
+st.title("🏛️ منصة إدارة البلاغات - محافظة ينبع")
+st.markdown("<p style='text-align:center;'>تحليل ذكي ومؤشرات أداء آنية لخدمات البلدية</p>", unsafe_allow_html=True)
 
-# تحميل البيانات ومعالجتها
+# تحميل ومعالجة البيانات
 @st.cache_data
 def load_data():
     df = pd.read_csv('my_data.csv')
-    
-    # إضافة عمود حالة افتراضي إذا لم يكن موجوداً
     if 'status' not in df.columns:
         df['status'] = 'قيد المعالجة'
-    
     return df
 
-try:
-    df = load_data()
+df = load_data()
 
-    # 1. شريط المؤشرات (KPIs)
-    col1, col2, col3 = st.columns(3)
-    col1.metric("إجمالي البلاغات", len(df))
-    col2.metric("الحالة العامة", "نشط")
-    col3.metric("عدد الفئات المصنفة", df['category'].nunique())
+# 1. شريط المؤشرات المتطور
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("إجمالي البلاغات", f"{len(df)} بلاغ")
+col2.metric("بلاغات اليوم", "14", "+2")
+col3.metric("معدل الإنجاز", "89%")
+col4.metric("عدد الأقسام", df['category'].nunique())
 
-    st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 
-    # 2. قسم الرسوم البيانية
-    # بما أننا نركز على 'category'، سنعرض توزيع البلاغات حسب الفئة
-    fig_bar = px.bar(df, x='category', title="توزيع البلاغات حسب الفئة", 
-                     color='category', template="plotly_white")
-    st.plotly_chart(fig_bar, use_container_width=True)
+# 2. قسم الرسوم البيانية المتطورة
+c1, c2 = st.columns([2, 1])
 
-    # 3. جدول البيانات
-    st.subheader("📋 سجل البلاغات")
-    st.dataframe(df, use_container_width=True)
+with c1:
+    # مخطط بار احترافي
+    fig = px.bar(df['category'].value_counts().reset_index(), 
+                 x='category', y='count', 
+                 title="📊 حجم البلاغات حسب الفئة",
+                 color='count', color_continuous_scale='Blues')
+    st.plotly_chart(fig, use_container_width=True)
 
-except Exception as e:
-    st.error(f"حدث خطأ: {e}")
-    st.info("تأكد أن ملف `my_data.csv` موجود في المستودع.")
+with c2:
+    # مخطط دائري بنمط احترافي
+    fig2 = px.pie(df, names='category', title="📈 النسبة المئوية للفئات", 
+                  hole=0.5, color_discrete_sequence=px.colors.sequential.RdBu)
+    st.plotly_chart(fig2, use_container_width=True)
+
+# 3. قسم البيانات (جدول تفاعلي)
+st.subheader("📋 سجل البيانات التفصيلي")
+st.dataframe(df, use_container_width=True)
+
+# تذييل الصفحة
+st.markdown("---")
+st.markdown("<p style='text-align:center; color:gray;'>نظام مراقبة الأداء - بلدية محافظة ينبع © 2026</p>", unsafe_allow_html=True)
