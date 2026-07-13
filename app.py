@@ -1,51 +1,53 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import plotly.express as px
+import os
 
-# إعداد الصفحة
-st.set_page_config(page_title="منصة البلدية الذكية", layout="wide")
+# إعداد الصفحة لتكون ذات طابع رسمي
+st.set_page_config(page_title="نظام تصنيف البلاغات الذكي", layout="wide")
 
-st.title("🚧 منصة رصد ومعالجة البلاغات البلدية")
+# ترويسة رسمية
+st.title("🏛️ نظام تصنيف البلاغات الذكي - أمانة المنطقة")
+st.markdown("---")
 
-# تحميل البيانات والموديل
+# تحميل الموارد مع معالجة الأخطاء
 @st.cache_resource
 def load_assets():
+    if not os.path.exists('my_model.pkl'):
+        return None, None
+    model = joblib.load('my_model.pkl')
     df = pd.read_csv('my_data.csv')
-    # تأكد من أن الملف موجود بهذا الاسم في GitHub
-    model = joblib.load('my_model (1).pkl') 
-    return df, model
+    return model, df
 
-try:
-    df, model = load_assets()
+model, df = load_assets()
 
-    # 1. المؤشرات (تأكد أن 'status' هو اسم العمود في ملفك)
-    # إذا لم يكن موجوداً، سيظهر خطأ، لذا تأكد من ملف CSV
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("إجمالي البلاغات", len(df))
-    with col2:
-        # حساب البلاغات التي حالتها 'Done'
-        done_count = len(df[df['status'] == 'Done'])
-        st.metric("البلاغات المنجزة", done_count)
+# التحقق من أن الموديل يعمل
+if model is None:
+    st.error("خطأ: لم يتم العثور على ملف النموذج. يرجى التأكد من رفع ملف my_model.pkl بشكل صحيح.")
+else:
+    # لوحة المؤشرات (KPIs)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("إجمالي البلاغات الواردة", len(df))
+    col2.metric("التصنيفات المعتمدة", df['category'].nunique())
+    col3.metric("مستوى الاستجابة", "فعال")
 
-    st.markdown("---")
+    # تبويب لعرض البيانات
+    with st.expander("📄 أرشيف البلاغات الواردة"):
+        st.dataframe(df, use_container_width=True)
 
-    # 2. الرسم البياني
-    fig = px.pie(df, names='category', title="توزيع البلاغات حسب الفئة")
-    st.plotly_chart(fig, use_container_width=True)
-
-    # 3. قسم التصنيف بالذكاء الاصطناعي
-    st.subheader("🤖 تصنيف بلاغ جديد")
-    user_input = st.text_area("أدخل نص البلاغ:")
+    # قسم التصنيف الذكي
+    st.markdown("### 🔍 تصنيف البلاغات الواردة")
+    st.info("قم بإدخال تفاصيل البلاغ ليقوم النظام بتصنيفه وتوجيهه للقسم المختص آلياً.")
     
-    if st.button("تصنيف البلاغ"):
-        if user_input:
-            pred = model.predict([user_input])
-            st.success(f"✅ فئة البلاغ هي: **{pred[0]}**")
-        else:
-            st.warning("يرجى إدخال نص للتحليل.")
+    user_input = st.text_area("نص البلاغ:", placeholder="مثال: تراكم نفايات في شارع العام...")
 
-except Exception as e:
-    st.error(f"حدث خطأ: {e}")
-    st.info("تأكد أن ملف `my_data.csv` يحتوي على أعمدة بأسماء `status` و `category`.")
+    if st.button("تصنيف البلاغ وإرساله"):
+        if user_input:
+            try:
+                # التأكد أن الموديل مدرب (فحص بسيط)
+                prediction = model.predict([user_input])
+                st.success(f"✅ تم تصنيف البلاغ بنجاح تحت فئة: **{prediction[0]}**")
+            except Exception as e:
+                st.error("الموديل يحتاج إلى إعادة تدريب أو يحتوي على خلل في البيانات. يرجى التحقق من ملف pkl.")
+        else:
+            st.warning("يرجى كتابة نص البلاغ للتمكن من التصنيف.")
