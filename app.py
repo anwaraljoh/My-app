@@ -5,27 +5,16 @@ import plotly.express as px
 # إعداد الصفحة
 st.set_page_config(page_title="منصة بلدية ينبع الرقمية", layout="wide")
 
-# تصميم الألوان المطور (CSS)
+# تنسيق الخلفية والألوان (نظام ألوان رسمي)
 st.markdown("""
     <style>
-    /* تغيير لون الخلفية بالكامل */
     .stApp {background-color: #f4f7f6;}
-    
-    /* تنسيق الكروت (المؤشرات) */
-    div[data-testid="stMetricValue"] {
-        color: #006633; /* الأخضر الغامق */
-        font-weight: bold;
-    }
-    
-    /* تنسيق الحاويات */
-    .css-1r6slb0 {background-color: #ffffff; padding: 20px; border-radius: 15px;}
-    
-    /* تنسيق العنوان */
-    h1 {color: #006633; text-align: center; border-bottom: 2px solid #006633; padding-bottom: 10px;}
+    h1 {color: #006633; text-align: center; font-weight: bold;}
+    .stMetric {background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);}
     </style>
 """, unsafe_allow_html=True)
 
-st.title("🏛️ منصة إدارة البلاغات - بلدية محافظة ينبع")
+st.title("🏛️ منصة إدارة وتصنيف البلاغات - بلدية ينبع")
 
 # تحميل البيانات
 @st.cache_data
@@ -34,29 +23,31 @@ def load_data():
 
 df = load_data()
 
-# 1. المؤشرات (استخدام أعمدة ملفك الحقيقي)
-col1, col2, col3 = st.columns(3)
+# 1. شريط المؤشرات (KPIs) بناءً على أعمدة بياناتك
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("إجمالي البلاغات", len(df))
-col2.metric("عدد الإدارات المعنية", df['department'].nunique())
-col3.metric("البلاغات عالية الأولوية", len(df[df['priority'] == 'عالية']))
+col2.metric("عالية الأهمية", len(df[df['priority'] == 'عالية']))
+col3.metric("عدد الإدارات", df['department'].nunique())
+col4.metric("أكثر فئة تكراراً", df['category'].mode()[0])
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 2. الرسوم البيانية
-c1, c2 = st.columns([2, 1])
+# 2. الرسوم البيانية التفاعلية
+c1, c2 = st.columns([1, 1])
 
 with c1:
     # توزيع البلاغات حسب الإدارة
-    fig_bar = px.bar(df, x='department', title="توزيع البلاغات حسب الإدارة المختصة", 
-                     color='department', color_discrete_sequence=px.colors.qualitative.Greens)
-    st.plotly_chart(fig_bar, use_container_width=True)
+    fig_dept = px.bar(df['department'].value_counts().reset_index(), 
+                     x='department', y='count', title="البلاغات حسب الإدارة",
+                     color='count', color_continuous_scale='Greens')
+    st.plotly_chart(fig_dept, use_container_width=True)
 
 with c2:
     # توزيع حسب الأولوية
-    fig_pie = px.pie(df, names='priority', title="حسب درجة الأهمية", 
-                     hole=0.4, color_discrete_sequence=['#006633', '#8fbc8f', '#d3d3d3'])
-    st.plotly_chart(fig_pie, use_container_width=True)
+    fig_pri = px.pie(df, names='priority', title="توزيع البلاغات حسب الأولوية",
+                     color_discrete_sequence=['#ff4b4b', '#ffa500', '#006633'])
+    st.plotly_chart(fig_pri, use_container_width=True)
 
-# 3. جدول البيانات
-st.subheader("📋 تفاصيل البلاغات المسجلة")
-st.dataframe(df, use_container_width=True)
+# 3. سجل البيانات
+st.subheader("📋 تفاصيل البلاغات")
+st.dataframe(df[['complaint', 'category', 'priority', 'department']], use_container_width=True)
