@@ -3,62 +3,106 @@ import pandas as pd
 import plotly.express as px
 
 # إعداد الصفحة
-st.set_page_config(page_title="منصة بلدية ينبع الرقمية", layout="wide")
+st.set_page_config(
+    page_title="منصة بلدية ينبع",
+    page_icon="🏛️",
+    layout="wide"
+)
 
-# تصميم احترافي (خلفية هادئة وخطوط واضحة)
+# قراءة البيانات
+df = pd.read_excel("بلاغات_بلدية_ينبع_محدث(1).xlsx")
+
+# تنسيق CSS
 st.markdown("""
-    <style>
-    /* تغيير لون الخلفية بالكامل إلى رمادي فاتح جداً */
-    .stApp {background-color: #f8f9fa;}
-    
-    /* تنسيق الكروت لتكون بيضاء ونظيفة */
-    div[data-testid="stMetricValue"] {
-        color: #006633;
-        font-weight: bold;
-    }
-    
-    /* العنوان */
-    h1 {color: #006633; text-align: center; padding-bottom: 20px;}
-    </style>
+<style>
+.main{
+    background:#f7f9f7;
+}
+h1{
+    color:#0B6E4F;
+    text-align:center;
+}
+.card{
+    background:white;
+    padding:18px;
+    border-radius:15px;
+    box-shadow:0 4px 12px rgba(0,0,0,.1);
+    text-align:center;
+}
+</style>
 """, unsafe_allow_html=True)
 
-st.title("🏛️ منصة إدارة وتصنيف البلاغات - بلدية محافظة ينبع")
+st.title("🏛️ منصة بلدية ينبع الرقمية")
 
-# تحميل البيانات
-@st.cache_data
-def load_data():
-    return pd.read_csv('my_data.csv')
-
-df = load_data()
-
-# 1. شريط المؤشرات (KPIs) - استخدام الأعمدة الموجودة في ملفك
-col1, col2, col3 = st.columns(3)
-col1.metric("إجمالي البلاغات", len(df))
-col2.metric("عدد الإدارات المعنية", df['department'].nunique())
-col3.metric("البلاغات عالية الأهمية", len(df[df['priority'] == 'عالية']))
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 2. الرسوم البيانية
-c1, c2 = st.columns([2, 1])
+# بطاقات KPI
+c1,c2,c3,c4=st.columns(4)
 
 with c1:
-    # مخطط توزيع البلاغات حسب الإدارة
-    fig_bar = px.bar(df['department'].value_counts().reset_index(), 
-                     x='department', y='count', title="📊 توزيع البلاغات حسب الإدارة",
-                     color='count', color_continuous_scale='Greens')
-    st.plotly_chart(fig_bar, use_container_width=True)
+    st.markdown(f"""
+    <div class='card'>
+    <h2>{len(df)}</h2>
+    <p>إجمالي البلاغات</p>
+    </div>
+    """,unsafe_allow_html=True)
 
 with c2:
-    # مخطط دائري للأولويات
-    fig_pie = px.pie(df, names='priority', title="📈 تصنيف البلاغات حسب الأولوية", 
-                     hole=0.4, color_discrete_sequence=['#006633', '#8fbc8f', '#d3d3d3'])
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.markdown(f"""
+    <div class='card'>
+    <h2>{df['category'].nunique()}</h2>
+    <p>عدد التصنيفات</p>
+    </div>
+    """,unsafe_allow_html=True)
 
-# 3. جدول البيانات
-st.subheader("📋 سجل البيانات التفصيلي")
-st.dataframe(df[['complaint', 'category', 'priority', 'department']], use_container_width=True)
+with c3:
+    st.markdown(f"""
+    <div class='card'>
+    <h2>{df['department'].nunique()}</h2>
+    <p>الإدارات</p>
+    </div>
+    """,unsafe_allow_html=True)
 
-# تذييل الصفحة
-st.markdown("---")
-st.markdown("<center>نظام مراقبة الأداء - بلدية محافظة ينبع © 2026</center>", unsafe_allow_html=True)
+with c4:
+    st.markdown(f"""
+    <div class='card'>
+    <h2>{df['priority'].nunique()}</h2>
+    <p>مستويات الأولوية</p>
+    </div>
+    """,unsafe_allow_html=True)
+
+st.divider()
+
+# الرسوم
+left,right=st.columns(2)
+
+with left:
+    fig=px.bar(
+        df["category"].value_counts().reset_index(),
+        x="category",
+        y="count",
+        color="count",
+        title="البلاغات حسب التصنيف"
+    )
+    st.plotly_chart(fig,use_container_width=True)
+
+with right:
+    fig2=px.pie(
+        df,
+        names="priority",
+        title="توزيع الأولوية",
+        hole=.5
+    )
+    st.plotly_chart(fig2,use_container_width=True)
+
+fig3=px.bar(
+    df["department"].value_counts().reset_index(),
+    x="department",
+    y="count",
+    color="count",
+    title="البلاغات حسب الإدارة"
+)
+st.plotly_chart(fig3,use_container_width=True)
+
+st.subheader("📋 بيانات البلاغات")
+st.dataframe(df,use_container_width=True,hide_index=True)
+
+st.success("تم تحميل لوحة المعلومات بنجاح ✅")
