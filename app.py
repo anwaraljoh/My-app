@@ -5,7 +5,7 @@ import plotly.express as px
 # 1. إعداد الصفحة
 st.set_page_config(page_title="منصة ينبع المركزية", layout="wide")
 
-# 2. تصميم "Glassmorphism" إبداعي
+# 2. تصميم "Glassmorphism" 
 st.markdown("""
     <style>
     .stApp {background: radial-gradient(circle at top right, #1e293b, #0f172a);}
